@@ -18,14 +18,13 @@
 
 var player;
 const acc=0.1;
-const turnrate=0.1;
-var updownSpeed=0;
-const maxSPeed=0.5;
-var leftrightSpeed=0;
+const turnrate=0.05;
+const maxSpeed=1;
+var speed = 0;
 up=false;
 down=false;
-var array = {37: false, 38: false, 39: false, 40: false};
-    //event listener for resizing app to window size
+//65 left 68 right 87 up 83 down
+var array = {65: false, 68: false, 87: false, 83: false, 119:false, 115:false, 100:false, 97:false};    //event listener for resizing app to window size
     window.addEventListener('resize', function()
     {
       var width = window.innerWidth;
@@ -63,166 +62,77 @@ var array = {37: false, 38: false, 39: false, 40: false};
     var ambientLight = new THREE.AmbientLight(0xefebd8, 2);
     scene.add(ambientLight)
 
-
     cubeGeometry = new THREE.CubeGeometry(300, 300, 0);
       cubeMaterial = new THREE.MeshBasicMaterial( {color:'rgb(0,0,250)'} );
       cube = new THREE.Mesh( cubeGeometry, cubeMaterial );
       cube.translateZ(-10);
-
-
      scene.add(cube);
-
 
 var render = function()
 {
   renderer.render(scene, camera);
 };
 
-
-
-
-window.addEventListener ("keydown",event=>{
-
-
-
-
-
+window.addEventListener ("keypress",event=>{
   if(event.keyCode in array)
-  {
-    array[event.keyCode]=true;
-    if(array[38] && array[39]) //up and right
-    {
-      if(leftrightSpeed==maxSPeed || updownSpeed==maxSPeed)
-      {
-        return;
-      }
-      leftrightSpeed+=acc;
-      updownSpeed+=turnrate;
-    }
-    if(array[38] && array[37]) //up and left
-    {
-      if(leftrightSpeed==maxSPeed || updownSpeed==maxSPeed)
-      {
-        return;
-      }
-      leftrightSpeed-=acc;
-      updownSpeed+=turnrate;
-    }
-    if(array[40] && array[39]) //down and right
-    {
-      if(leftrightSpeed==maxSPeed || updownSpeed==maxSPeed)
-      {
-        return;
-      }
-      leftrightSpeed+=acc;
-      updownSpeed-=turnrate;
-    }
-    if(array[37] && array[40]) //down and left
-    {
-      if(leftrightSpeed==maxSPeed || updownSpeed==maxSPeed)
-      {
-        return;
-      }
-      leftrightSpeed-=acc;
-      updownSpeed-=turnrate;
-    }
-  }
-
-
-
-  if(event.keyCode == '37')//right
-  {
-    if(leftrightSpeed==maxSPeed)
-    {
-      return;
-    }
-
-    leftrightSpeed-=acc;
-
-
-
-  }
-
-
-  if(event.keyCode == '39')//left
-  {
-    if(leftrightSpeed==maxSPeed)
-    {
-      return;
-    }
-
-    leftrightSpeed+=acc;
-
-
-
-  }
-
-   if(event.keyCode == '38')//up
-  {
-    if(updownSpeed==-maxSPeed)
-    {
-      return;
-    }
-
-  //  speed-=acc;
-    updownSpeed+=turnrate;
-
-
-
-  }
-
-  if(event.keyCode == '40')//down
-  {
-    if(updownSpeed==maxSPeed)
-    {
-      return;
-    }
-
-  //  speed+=acc;
-    updownSpeed-=turnrate;
-
-
-
-  }
-
-
-
+      array[event.keyCode] = true;
 });
 
 window.addEventListener ("keyup",event=>{
-  if (event.keyCode in map) {
-        map[event.keyCode] = false;
-      }
-
+  if(event.keyCode in array)
+    array[event.keyCode] = false;
 });
+
+var accelerate = function(x){
+  if(speed>=maxSpeed || speed<=-maxSpeed){
+    return;
+  }
+  if(x==1)
+  {
+      speed+=acc;
+  }
+  else
+  {
+    speed-=acc;
+  }
+}
+// small letters dont stop
+var playerMovement = function(){
+  //65 left 68 right 87 up 83 down
+  if(array[87]){
+        //Forward
+        accelerate(1);
+    }
+  if(array[83]){
+        //Back
+        accelerate(2);
+    }
+  if(array[65]){
+        //left
+        player.rotateZ(turnrate);
+    }
+  if(array[68]){
+        //right
+        player.rotateZ(-turnrate);
+    }
+  player.translateY(speed);
+}
+
 var GameLoop = function()
 {
 
   if(player)
     {
-
-    player.translateX(leftrightSpeed);
-    player.translateY(updownSpeed);
-
+      playerMovement();
     //player.rotateY(speed);
     //player.rotateX(-diagonalSpeed);
-     if(updownSpeed>0)
+     if(speed>0)
     {
-      updownSpeed-=0.01;
+      speed-=0.01;
     }
-    else if(updownSpeed<0)
+    else if(speed<0)
     {
-      updownSpeed+=0.01;
-    }
-    if(leftrightSpeed>0)
-    {
-
-      leftrightSpeed-=0.01;
-    }
-
-    else if(leftrightSpeed<0)
-    {
-      leftrightSpeed+=0.01;
+      speed+=0.01;
     }
 
     }
