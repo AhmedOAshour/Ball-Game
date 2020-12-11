@@ -18,8 +18,13 @@
 
 var player;
 const acc=0.1;
+const turnrate=0.1;
+var updownSpeed=0;
 const maxSPeed=0.5;
-var speed=0;
+var leftrightSpeed=0;
+up=false;
+down=false;
+var array = {37: false, 38: false, 39: false, 40: false};
     //event listener for resizing app to window size
     window.addEventListener('resize', function()
     {
@@ -53,7 +58,8 @@ var speed=0;
     	}
     );
 
-    camera.position.z = 100;
+    controls = new THREE.OrbitControls(camera,renderer.domElement);
+    camera.position.z = 10;
     var ambientLight = new THREE.AmbientLight(0xefebd8, 2);
     scene.add(ambientLight)
 
@@ -77,50 +83,150 @@ var render = function()
 
 window.addEventListener ("keydown",event=>{
 
-  if(event.keyCode == '38')
+
+
+
+
+  if(event.keyCode in array)
   {
-    if(speed>=maxSPeed)
+    array[event.keyCode]=true;
+    if(array[38] && array[39]) //up and right
+    {
+      if(leftrightSpeed==maxSPeed || updownSpeed==maxSPeed)
+      {
+        return;
+      }
+      leftrightSpeed+=acc;
+      updownSpeed+=turnrate;
+    }
+    if(array[38] && array[37]) //up and left
+    {
+      if(leftrightSpeed==maxSPeed || updownSpeed==maxSPeed)
+      {
+        return;
+      }
+      leftrightSpeed-=acc;
+      updownSpeed+=turnrate;
+    }
+    if(array[40] && array[39]) //down and right
+    {
+      if(leftrightSpeed==maxSPeed || updownSpeed==maxSPeed)
+      {
+        return;
+      }
+      leftrightSpeed+=acc;
+      updownSpeed-=turnrate;
+    }
+    if(array[37] && array[40]) //down and left
+    {
+      if(leftrightSpeed==maxSPeed || updownSpeed==maxSPeed)
+      {
+        return;
+      }
+      leftrightSpeed-=acc;
+      updownSpeed-=turnrate;
+    }
+  }
+
+
+
+  if(event.keyCode == '37')//right
+  {
+    if(leftrightSpeed==maxSPeed)
     {
       return;
     }
 
-    speed+=acc;
+    leftrightSpeed-=acc;
+
 
 
   }
-  else if(event.keyCode == '40')
+
+
+  if(event.keyCode == '39')//left
   {
-    if(speed<=-maxSPeed)
+    if(leftrightSpeed==maxSPeed)
     {
       return;
     }
 
-    speed-=acc;
+    leftrightSpeed+=acc;
+
 
 
   }
+
+   if(event.keyCode == '38')//up
+  {
+    if(updownSpeed==-maxSPeed)
+    {
+      return;
+    }
+
+  //  speed-=acc;
+    updownSpeed+=turnrate;
+
+
+
+  }
+
+  if(event.keyCode == '40')//down
+  {
+    if(updownSpeed==maxSPeed)
+    {
+      return;
+    }
+
+  //  speed+=acc;
+    updownSpeed-=turnrate;
+
+
+
+  }
+
 
 
 });
 
+window.addEventListener ("keyup",event=>{
+  if (event.keyCode in map) {
+        map[event.keyCode] = false;
+      }
 
+});
 var GameLoop = function()
 {
 
   if(player)
     {
-      console.log(speed);
-      player.translateY(speed);
-      player.rotateY(speed/4);
-      if(speed>0)
-      {
-        speed-=0.01;
-      }
-      else if(speed<0)
-      {
-        speed+=0.01;
-      }
+
+    player.translateX(leftrightSpeed);
+    player.translateY(updownSpeed);
+
+    //player.rotateY(speed);
+    //player.rotateX(-diagonalSpeed);
+     if(updownSpeed>0)
+    {
+      updownSpeed-=0.01;
     }
+    else if(updownSpeed<0)
+    {
+      updownSpeed+=0.01;
+    }
+    if(leftrightSpeed>0)
+    {
+
+      leftrightSpeed-=0.01;
+    }
+
+    else if(leftrightSpeed<0)
+    {
+      leftrightSpeed+=0.01;
+    }
+
+    }
+
   requestAnimationFrame(GameLoop);
 
   render();
