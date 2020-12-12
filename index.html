@@ -15,14 +15,12 @@
     var renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight)
     document.body.appendChild(renderer.domElement);
-
+var mesh;
 var player;
 const acc=0.1;
 const turnrate=0.05;
 const maxSpeed=1;
 var speed = 0;
-up=false;
-down=false;
 //65 left 68 right 87 up 83 down
 var array = {65: false, 68: false, 87: false, 83: false, 119:false, 115:false, 100:false, 97:false};    //event listener for resizing app to window size
     window.addEventListener('resize', function()
@@ -39,10 +37,10 @@ var array = {65: false, 68: false, 87: false, 83: false, 119:false, 115:false, 1
     // Load a glTF resource
     loader.load(
     	// resource URL
-    	'models/scene.gltf',
+    	'models/moon/scene.gltf',
     	// called when the resource is loaded
       function ( gltf ) {
-          //gltf.scene.scale.set(2,2,2) // scale here
+
           player = gltf.scene;
           player.scale.set(0.1,0.1,0.1);
           scene.add( player );
@@ -58,15 +56,29 @@ var array = {65: false, 68: false, 87: false, 83: false, 119:false, 115:false, 1
     );
 
     controls = new THREE.OrbitControls(camera,renderer.domElement);
-    camera.position.z = 10;
+    camera.position.z = 50;
     var ambientLight = new THREE.AmbientLight(0xefebd8, 2);
     scene.add(ambientLight)
 
-    cubeGeometry = new THREE.CubeGeometry(300, 300, 0);
+    cubeGeometry = new THREE.CubeGeometry(300, 0, 300);
       cubeMaterial = new THREE.MeshBasicMaterial( {color:'rgb(0,0,250)'} );
       cube = new THREE.Mesh( cubeGeometry, cubeMaterial );
-      cube.translateZ(-10);
+      cube.translateY(-10);
      scene.add(cube);
+
+     {
+    const loader = new THREE.CubeTextureLoader();
+    const texture = loader.load([
+      'models/skybox/front.png',
+      'models/skybox/back.png',
+      'models/skybox/up.png',
+      'models/skybox/down.png',
+      'models/skybox/left.png',
+      'models/skybox/right.png',
+
+    ]);
+    scene.background = texture;
+  }
 
 var render = function()
 {
@@ -89,7 +101,7 @@ var accelerate = function(x){
   }
   if(x==1)
   {
-      speed+=acc;
+    speed+=acc;
   }
   else
   {
@@ -109,13 +121,13 @@ var playerMovement = function(){
     }
   if(array[65]){
         //left
-        player.rotateZ(turnrate);
+        player.rotateY(turnrate);
     }
   if(array[68]){
         //right
-        player.rotateZ(-turnrate);
+        player.rotateY(-turnrate);
     }
-  player.translateY(speed);
+  player.translateX(speed);
 }
 
 var GameLoop = function()
@@ -123,17 +135,17 @@ var GameLoop = function()
 
   if(player)
     {
+
       playerMovement();
-    //player.rotateY(speed);
-    //player.rotateX(-diagonalSpeed);
-     if(speed>0)
-    {
-      speed-=0.01;
-    }
-    else if(speed<0)
-    {
-      speed+=0.01;
-    }
+
+      if(speed>0)
+        {
+          speed-=0.01;
+        }
+        else if(speed<0)
+        {
+          speed+=0.01;
+        }
 
     }
 
