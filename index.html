@@ -15,6 +15,18 @@
     var renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight)
     document.body.appendChild(renderer.domElement);
+
+    controls = new THREE.OrbitControls(camera,renderer.domElement);
+    controls.maxDistance = 50;
+    controls.minDistance = 50;
+    controls.maxPolarAngle = Math.PI/3;
+    controls.minPolarAngle = Math.PI/3;
+    controls.rotateSpeed = 5;
+    controls.enabled = false;
+    //camera.rotation.y = Math.PI;
+    camera.position.y = 50;
+    camera.position.x = -40;
+
 var mesh;
 var player;
 const acc=0.1;
@@ -43,6 +55,10 @@ var array = {65: false, 68: false, 87: false, 83: false, 119:false, 115:false, 1
 
           player = gltf.scene;
           player.scale.set(0.1,0.1,0.1);
+          controls.target.set(player.position.x,player.position.y,player.position.z);
+          controls.update();
+
+          //camera.lookAt(player.position);
           scene.add( player );
       },
     	// called while loading is progressing
@@ -55,8 +71,6 @@ var array = {65: false, 68: false, 87: false, 83: false, 119:false, 115:false, 1
     	}
     );
 
-    controls = new THREE.OrbitControls(camera,renderer.domElement);
-    camera.position.z = 50;
     var ambientLight = new THREE.AmbientLight(0xefebd8, 2);
     scene.add(ambientLight)
 
@@ -122,12 +136,17 @@ var playerMovement = function(){
   if(array[65]){
         //left
         player.rotateY(turnrate);
+
     }
   if(array[68]){
         //right
         player.rotateY(-turnrate);
     }
   player.translateX(speed);
+  controls.target.set(player.position.x,player.position.y,player.position.z);
+  //camera.position.x = player.position.x-40
+  controls.update();
+  //camera.lookAt(player.position);
 }
 
 var GameLoop = function()
@@ -137,6 +156,8 @@ var GameLoop = function()
     {
 
       playerMovement();
+
+
 
       if(speed>0)
         {
