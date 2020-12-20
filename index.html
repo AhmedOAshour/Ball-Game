@@ -5,6 +5,11 @@
     <title></title>
   </head>
   <body>
+    <style>
+      body{
+      margin: 0px;
+      overflow: hidden; }
+    </style>
     <script src="lib/three.js"></script>
     <script src="lib/OrbitControls.js"></script>
     <script src="lib/GLTFLoader.js"></script>
@@ -34,7 +39,7 @@ const turnrate=0.05;
 const maxSpeed=1;
 var speed = 0;
 //65 left 68 right 87 up 83 down
-var array = {65: false, 68: false, 87: false, 83: false, 119:false, 115:false, 100:false, 97:false};    //event listener for resizing app to window size
+var array = {65: false, 68: false, 87: false, 83: false};    //event listener for resizing app to window size
     window.addEventListener('resize', function()
     {
       var width = window.innerWidth;
@@ -99,7 +104,7 @@ var render = function()
   renderer.render(scene, camera);
 };
 
-window.addEventListener ("keypress",event=>{
+window.addEventListener ("keydown",event=>{
   if(event.keyCode in array)
       array[event.keyCode] = true;
 });
