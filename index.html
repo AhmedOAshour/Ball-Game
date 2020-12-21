@@ -5,7 +5,9 @@
     <title></title>
   </head>
   <body>
+    <embed id="sound" src="soundtrack\theme.mp3" loop="true" style="display:none;" autostart="true">
     <div class="wrapper">
+      <p>Move: W-A-S-D</p>
       <button type="button" id="refresh" onclick="document.location.reload();">Play Again</button>
       <button type="button" id="win" onclick="document.location.reload();">You Win! Play Again</button>
     </div>
@@ -14,11 +16,19 @@
         margin: 0px;
         overflow: hidden;
       }
+      p{
+        position: absolute;
+        top: 0%;
+        left: 80%;
+        z-index: 100;
+        display: block;
+        color: white;
+      }
       #refresh, #win {
           position: absolute;
           top: 50%;
           left: 50%;
-          width: 100px;
+          width: 150px;
           height: 150px;
           background-color: darkgreen;
           border-color: darkgreen;
@@ -32,6 +42,7 @@
     <script src="lib/OrbitControls.js"></script>
     <script src="lib/GLTFLoader.js"></script>
     <script>
+    (function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='//mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
     var scene = new THREE.Scene();
     //(field of view in degrees, , near clipping plane, far clipping plane)
     var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -45,18 +56,17 @@
     controls.maxPolarAngle = Math.PI/3;
     controls.minPolarAngle = Math.PI/3;
     controls.rotateSpeed = 1;
-    //controls.enabled = false;
-    //camera.rotation.y = Math.PI;
+    controls.enabled = false;
     camera.position.y = 50;
     camera.position.x = -40;
-var goal;
-var player;
-const acc=0.1;
-const turnrate=0.05;
-const maxSpeed=2;
-var speed = 0;
-//65 left 68 right 87 up 83 down
-var array = {65: false, 68: false, 87: false, 83: false};    //event listener for resizing app to window size
+    var goal;
+    var player;
+    const acc=0.1;
+    const turnrate=0.05;
+    const maxSpeed=2;
+    var speed = 0;
+    //65 left 68 right 87 up 83 down
+    var array = {65: false, 68: false, 87: false, 83: false};    //event listener for resizing app to window size
     window.addEventListener('resize', function()
     {
       var width = window.innerWidth;
@@ -66,20 +76,20 @@ var array = {65: false, 68: false, 87: false, 83: false};    //event listener fo
       camera.updateProjectionMatrix();
     });
 
-    cubeGeometry = new THREE.CubeGeometry(1200, 0, 300);
+    cubeGeometry = new THREE.CubeGeometry(1200, 10, 300);
     cubeMaterial = new THREE.MeshBasicMaterial( {color:'rgb(0,0,250)'} );
     cube = new THREE.Mesh( cubeGeometry, cubeMaterial );
     cube.translateX(450);
     scene.add(cube);
 
-    cube2Geometry = new THREE.CubeGeometry(1200, 0, 300);
+    cube2Geometry = new THREE.CubeGeometry(1200, 10, 300);
     cube2Material = new THREE.MeshBasicMaterial( {color:'rgb(100,10,20)'} );
     cube2 = new THREE.Mesh( cube2Geometry, cube2Material );
     cube2.translateX(450);
     cube2.translateZ(750);
     scene.add(cube2);
 
-    cube6Geometry = new THREE.CubeGeometry(300, 0, 450);
+    cube6Geometry = new THREE.CubeGeometry(300, 10, 450);
     cube6Material = new THREE.MeshBasicMaterial( {color:'rgb(100,200,210)'} );
     cube6 = new THREE.Mesh( cube6Geometry, cube6Material );
     cube6.translateX(900);
@@ -117,8 +127,7 @@ var array = {65: false, 68: false, 87: false, 83: false};    //event listener fo
     	// called when loading has errors
     	function ( error ) {
     		console.log( 'An error happened' );
-    	}
-    );
+    	});
 
     loader.load(
     	// resource URL
@@ -137,8 +146,7 @@ var array = {65: false, 68: false, 87: false, 83: false};    //event listener fo
     	// called when loading has errors
     	function ( error ) {
     		console.log( 'An error happened' );
-    	}
-    );
+    	});
 
      {
      loader = new THREE.CubeTextureLoader();
@@ -152,7 +160,7 @@ var array = {65: false, 68: false, 87: false, 83: false};    //event listener fo
 
     ]);
     scene.background = texture;
-  }
+    }
 
 var render = function()
 {
@@ -208,15 +216,15 @@ var playerMovement = function(){
   controls.update();
   //camera.lookAt(player.position);
 }
-
-var friction = function(){
+var friction = 0.008;
+var decelerate = function(){
   if(speed>0)
     {
-      speed-=0.01;
+      speed-=friction;
     }
     else if(speed<0)
     {
-      speed+=0.01;
+      speed+=friction;
     }
 }
 
@@ -235,9 +243,14 @@ var gameover = false;
 var GameOver = function(x){
   gameover = true;
   if(x==1)
-   document.getElementById('refresh').style.display = 'block';
+   {
+     document.getElementById('refresh').style.display = 'block';
+     document.getElementById('sound').src="soundtrack/lose.mp3";
+   }
   else if(x==2)
-    document.getElementById('win').style.display = 'block';
+    {
+      document.getElementById('win').style.display = 'block';
+    }
 }
 var winner = function(){
   if( player.position.x < 25 && player.position.x > -25 && (player.position.z < 775 && player.position.z > 725))
@@ -255,7 +268,7 @@ var GameLoop = function()
     {
       playerMovement();
       outOfBounds();
-      friction();
+      decelerate();
       if(winner())
         {
           GameOver(2);
