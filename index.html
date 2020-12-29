@@ -64,6 +64,7 @@
     const acc=0.1;
     const turnrate=0.05;
     const maxSpeed=2;
+    const friction = 0.008;
     var speed = 0;
     //65 left 68 right 87 up 83 down
     var array = {65: false, 68: false, 87: false, 83: false};    //event listener for resizing app to window size
@@ -212,11 +213,9 @@ var playerMovement = function(){
     }
   player.translateX(speed);
   controls.target.set(player.position.x,player.position.y,player.position.z);
-  //camera.position.x = player.position.x-40
   controls.update();
-  //camera.lookAt(player.position);
 }
-var friction = 0.008;
+
 var decelerate = function(){
   if(speed>0)
     {
@@ -245,7 +244,6 @@ var GameOver = function(x){
   if(x==1)
    {
      document.getElementById('refresh').style.display = 'block';
-     document.getElementById('sound').src="soundtrack/lose.mp3";
    }
   else if(x==2)
     {

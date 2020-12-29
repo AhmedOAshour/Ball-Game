@@ -3,9 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="b577efce-609c-4533-b627-fd551c84a4a8" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/scene.bin" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/scene.gltf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/textures/Material.002_diffuse.jpeg" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -23,6 +20,7 @@
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
   </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
       <changelist id="b577efce-609c-4533-b627-fd551c84a4a8" name="Default Changelist" comment="" />
