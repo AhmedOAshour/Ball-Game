@@ -169,19 +169,18 @@ loader.load(
    function initCannon() {
 
           world = new CANNON.World();
-          world.gravity.set(0,-50,0);
+          world.gravity.set(0,-25,0);
 
           world.broadphase = new CANNON.NaiveBroadphase();
           // world.solver.iterations = 10;
 
           shape = new CANNON.Sphere(5);
           mass = 1;
-
           sphereBody = new CANNON.Body({
             mass: 1
           });
           sphereBody.addShape(shape);
-          sphereBody.position.y=40;
+          sphereBody.position.y=10;
           sphereBody.linearDamping = 0.5;
           world.addBody(sphereBody);
           player=sphere;
@@ -247,6 +246,8 @@ loader.load(
       window.addEventListener ("keydown",event=>{
   if(event.keyCode in array)
       array[event.keyCode] = true;
+  if(event.keyCode == 32 && sphereBody.position.y<=10)
+    sphereBody.velocity.y+=25;
 });
 
 window.addEventListener ("keyup",event=>{
@@ -334,7 +335,6 @@ var decelerate = function(){
     if(sphereBody.position.y<0)
     {
       GameOver(1);
-
     }
     if(winner())
         {
@@ -342,6 +342,7 @@ var decelerate = function(){
         }
     requestAnimationFrame(GameLoop);
     playerMovement();
+    decelerate();
     updatePhysics();
     render();
 
