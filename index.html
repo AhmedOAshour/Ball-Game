@@ -4,22 +4,22 @@
     <meta charset="utf-8">
     <title>ThreeJs Sample</title>
     <div class="wrapper">
-     <p>Move: W-A-S-D</p>
      <button type="button" id="refresh" onclick="document.location.reload();">Play Again</button>
      <button type="button" id="win" onclick="document.location.reload();">You Win! Play Again</button>
    </div>
+   <div id="blocker">
+
+            <div id="instructions">
+                <span style="font-size:40px">Click to play</span>
+                <br />
+                (W,A,S,D = Move, SPACE = Jump, MOUSE = Look, CLICK = Shoot)
+            </div>
+
+        </div>
    <style>
      body{
        margin: 0px;
        overflow: hidden;
-     }
-     p{
-       position: absolute;
-       top: 0%;
-       left: 80%;
-       z-index: 100;
-       display: block;
-       color: white;
      }
      #refresh, #win {
          position: absolute;
@@ -33,6 +33,37 @@
          display: none;
          font-size: 25px;
        }
+#blocker {
+
+    position: absolute;
+
+    width: 100%;
+    height: 100%;
+
+    background-color: rgba(0,0,0,0.5);
+
+}
+
+#instructions {
+
+    width: 100%;
+    height: 100%;
+
+
+    display: box;
+
+    box-orient: horizontal;
+
+    box-pack: center;
+
+    box-align: center;
+
+    color: #ffffff;
+    text-align: center;
+
+    cursor: pointer;
+
+}
    </style>
   </head>
   <body>
@@ -40,10 +71,92 @@
 <script src="lib/OrbitControls.js"></script>
 <script src="lib/GLTFLoader.js"></script>
 <script src="lib/cannon.js"></script>
+<script src="lib/PointerLockControls.js"></script>
 
 <script>
+//PointerLockControls
+var controls,time = Date.now();
+var blocker = document.getElementById( 'blocker' );
+            var instructions = document.getElementById( 'instructions' );
+
+            var havePointerLock = 'pointerLockElement' in document;
+
+            if ( havePointerLock ) {
+
+                var element = document.body;
+
+                var pointerlockchange = function ( event ) {
+
+                    if ( document.pointerLockElement === element) {
+
+                        controls.enabled = true;
+
+                        blocker.style.display = 'none';
+
+                    } else {
+
+                        controls.enabled = false;
+
+                        blocker.style.display = '-webkit-box';
+                        blocker.style.display = '-moz-box';
+                        blocker.style.display = 'box';
+
+                        instructions.style.display = '';
+
+                    }
+
+                }
+
+                var pointerlockerror = function ( event ) {
+                    instructions.style.display = '';
+                }
+                // Hook pointer lock state change events
+                document.addEventListener( 'pointerlockchange', pointerlockchange, false );
+                document.addEventListener( 'pointerlockerror', pointerlockerror, false );
+
+                instructions.addEventListener( 'click', function ( event ) {
+                    instructions.style.display = 'none';
+
+                    // Ask the browser to lock the pointer
+                    element.requestPointerLock = element.requestPointerLock;
+
+                    if ( /Firefox/i.test( navigator.userAgent ) ) {
+
+                        var fullscreenchange = function ( event ) {
+
+                            if ( document.fullscreenElement === element ) {
+
+                                document.removeEventListener( 'fullscreenchange', fullscreenchange );
+                                element.requestPointerLock();
+                            }
+
+                        }
+
+                        document.addEventListener( 'fullscreenchange', fullscreenchange, false );
+
+                        element.requestFullscreen = element.requestFullscreen;
+
+                        element.requestFullscreen();
+
+                    } else {
+
+                        element.requestPointerLock();
+
+                    }
+
+                }, false );
+
+            } else {
+
+                instructions.innerHTML = 'Your browser doesn\'t seem to support Pointer Lock API';
+
+            }
+
+//GAME
 (function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='//mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
   var timeStep=1/60;
+
+  //INIT
   var scene = new THREE.Scene();
   //(field of view in degrees, , near clipping plane, far clipping plane)
   var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -51,13 +164,17 @@
   renderer.setSize(window.innerWidth, window.innerHeight)
   document.body.appendChild(renderer.domElement);
   var goal;
-   var player;
-   const acc=0.1
-   const turnrate=0.01;
-   const maxSpeed=2;
-   const friction = 0.008;
-   var speed = 0;
-   var speedlr=0;
+  var inward=true;
+  var player;
+  const acc=6
+  var shrink=25;
+  var shrinkBase=600;
+  var shrinking=true;
+  const turnrate=0.09;
+  const maxSpeed=2;
+  const friction = 0.008;
+  var speed = 0;
+  var speedlr=0;
    //65 left 68 right 87 up 83 down
    var array = {65: false, 68: false, 87: false, 83: false};    //event listener for resizing app to window size
    window.addEventListener('resize', function()
@@ -79,17 +196,18 @@
     camera.updateProjectionMatrix();
   });
 
-  //Orbit Control
-  controls = new THREE.OrbitControls(camera,renderer.domElement);
-  camera.lookAt(0,0,0);
-    controls.maxDistance = 50;
-    controls.minDistance = 50;
-    controls.maxPolarAngle = Math.PI/3;
-    controls.minPolarAngle = Math.PI/3;
-    controls.rotateSpeed = 1;
-    controls.enabled = false;
-    camera.position.y = 50;
-    camera.position.x = -40
+
+  // Orbit Control
+  // controls = new THREE.OrbitControls(camera,renderer.domElement);
+  // camera.lookAt(0,0,0);
+  //   controls.maxDistance = 50;
+  //   controls.minDistance = 50;
+  //   controls.maxPolarAngle = Math.PI/3;
+  //   controls.minPolarAngle = Math.PI/3;
+  //   controls.rotateSpeed = 1;
+  //   controls.enabled = false;
+  //   camera.position.y = 50;
+  //   camera.position.x = -40
   {
      loader = new THREE.CubeTextureLoader();
      texture = loader.load([
@@ -112,7 +230,7 @@ loader.load(
       function ( gltf ) {
           goal = gltf.scene;
           goal.scale.set(0.5,0.5,0.5);
-          goal.position.set(0, 0, 750);
+          goal.position.set(2675, 120, 0);
           scene.add( goal );
       },
         // called while loading is progressing
@@ -138,116 +256,394 @@ loader.load(
     }
 
 
-  // cubegeometry = new THREE.BoxGeometry( 100, 10, 100 );
-  // cubematerial = new THREE.MeshBasicMaterial( {color: 0x0000ff,wireframe :true} );
-  // cube = new THREE.Mesh( cubegeometry, cubematerial );
-  // // cube.translateY(10);
-  // scene.add( cube );
-    cubeGeometry = new THREE.CubeGeometry(1200, 10, 300);
-    cubeMaterial = new THREE.MeshBasicMaterial( {color:'rgb(0,0,250)'} );
-    cube = new THREE.Mesh( cubeGeometry, cubeMaterial );
-    scene.add(cube);
+  // ******************LEVEL ONE**********************
+    // cube1Geometry = new THREE.CubeGeometry(1200, 10, 300);
+    // cube1Material = new THREE.MeshBasicMaterial( {color:'rgb(0,0,250)'} );
+    // cube1 = new THREE.Mesh( cube1Geometry, cube1Material );
+    // scene.add(cube1);
+    //
+    // cube2Geometry = new THREE.CubeGeometry(400, 10, 150);
+    // cube2Material = new THREE.MeshBasicMaterial( {color:'rgb(250,0,0)'} );
+    // cube2 = new THREE.Mesh( cube2Geometry, cube2Material );
+    // scene.add(cube2);
+    //
+    // cube3Geometry = new THREE.CubeGeometry(400, 10, 150);
+    // cube3Material = new THREE.MeshBasicMaterial( {color:'rgb(250,0,0)'} );
+    // cube3 = new THREE.Mesh( cube3Geometry, cube3Material );
+    // scene.add(cube3);
+    //
+    // cube4Geometry = new THREE.CubeGeometry(400, 10, 150);
+    // cube4Material = new THREE.MeshBasicMaterial( {color:'rgb(250,0,0)'} );
+    // cube4 = new THREE.Mesh( cube4Geometry, cube4Material );
+    // scene.add(cube4);
+    //
+    // cube5Geometry = new THREE.CubeGeometry(600, 10, 300);
+    // cube5Material = new THREE.MeshBasicMaterial( {color:'rgb(0,0,250)'} );
+    // cube5 = new THREE.Mesh( cube5Geometry, cube5Material );
+    // scene.add(cube5);
 
+
+
+    // ******************LEVEL ONE**********************
+
+
+    // ******************LEVEL TWO**********************
     cube1Geometry = new THREE.CubeGeometry(1200, 10, 300);
-    cube1Material = new THREE.MeshBasicMaterial( {color:'rgb(100,10,20)'} );
+    cube1Material = new THREE.MeshBasicMaterial( {color:'rgb(0,0,250)'} );
     cube1 = new THREE.Mesh( cube1Geometry, cube1Material );
     scene.add(cube1);
 
-    cube2Geometry = new THREE.CubeGeometry(300, 10, 450);
-    cube2Material = new THREE.MeshBasicMaterial( {color:'rgb(100,200,210)'} );
+    cube2Geometry = new THREE.CubeGeometry(200, 10, 100);
+    cube2Material = new THREE.MeshBasicMaterial( {color:'rgb(250,0,250)'} );
     cube2 = new THREE.Mesh( cube2Geometry, cube2Material );
     scene.add(cube2);
+
+    cube3Geometry = new THREE.CubeGeometry(200, 10, 100);
+    cube3Material = new THREE.MeshBasicMaterial( {color:'rgb(250,0,250)'} );
+    cube3 = new THREE.Mesh( cube3Geometry, cube3Material );
+    scene.add(cube3);
+
+    cube4Geometry = new THREE.CubeGeometry(400, 10, 300);
+    cube4Material = new THREE.MeshBasicMaterial( {color:'rgb(0,0,250)'} );
+    cube4 = new THREE.Mesh( cube4Geometry, cube4Material );
+    scene.add(cube4);
+
+    cube5Geometry = new THREE.CubeGeometry(200, 5, 300);
+    cube5Material = new THREE.MeshBasicMaterial( {color:'rgb(100,25,250)'} );
+    cube5 = new THREE.Mesh( cube5Geometry, cube5Material );
+    scene.add(cube5);
+
+    cube6Geometry = new THREE.CubeGeometry(200, 20, 300);
+    cube6Material = new THREE.MeshBasicMaterial( {color:'rgb(124,162,34)'} );
+    cube6 = new THREE.Mesh( cube6Geometry, cube6Material );
+    scene.add(cube6);
+
+    cube7Geometry = new THREE.CubeGeometry(300, 10, 50);
+    cube7Material = new THREE.MeshBasicMaterial( {color:'rgb(124,73,84)'} );
+    cube7 = new THREE.Mesh( cube7Geometry, cube7Material );
+    scene.add(cube7);
+
+    // cube8Geometry = new THREE.CubeGeometry(500, 20, 300);
+    // cube8Material = new THREE.MeshBasicMaterial( {color:'rgb(62,189,125)'} );
+    // cube8 = new THREE.Mesh( cube8Geometry, cube8Material );
+    // scene.add(cube8);
+
+    // obst1Geometry = new THREE.CubeGeometry(50, 80, 50);
+    // obst1Material = new THREE.MeshBasicMaterial( {color:'rgb(11,73,111)'} );
+    // obst1 = new THREE.Mesh( obst1Geometry, obst1Material );
+    // scene.add(obst1);
+    //
+    // obst2Geometry = new THREE.CubeGeometry(50, 80, 50);
+    // obst2Material = new THREE.MeshBasicMaterial( {color:'rgb(11,73,111)'} );
+    // obst2 = new THREE.Mesh( obst2Geometry, obst2Material );
+    // scene.add(obst2);
+    // ******************LEVEL TWO**********************
+
+
 
    spheregeometry = new THREE.SphereGeometry( 5, 32, 32 );
    spherematerial = new THREE.MeshBasicMaterial( {color: 0x00ff00} );
    sphere = new THREE.Mesh( spheregeometry, spherematerial );
-   // sphere.position.y=20;
-   // sphere.translateY(100);
+
 
    scene.add( sphere );
 
    function initCannon() {
 
           world = new CANNON.World();
-          world.gravity.set(0,-25,0);
-
+          world.gravity.set(0,-20,0);
           world.broadphase = new CANNON.NaiveBroadphase();
-          // world.solver.iterations = 10;
-
-          shape = new CANNON.Sphere(5);
+          //////
+          physicsMaterial = new CANNON.Material("slipperyMaterial");
+                          var physicsContactMaterial = new CANNON.ContactMaterial(physicsMaterial,
+                                                                                  physicsMaterial,
+                                                                                  0.0, // friction coefficient
+                                                                                  0.3  // restitution
+                                                                                  );
+                          // We must add the contact materials to the world
+                          world.addContactMaterial(physicsContactMaterial);
+          ///////
+          sphereShape = new CANNON.Sphere(5);
           mass = 1;
           sphereBody = new CANNON.Body({
             mass: 1
           });
-          sphereBody.addShape(shape);
+          sphereBody.addShape(sphereShape);
           sphereBody.position.y=10;
           sphereBody.linearDamping = 0.5;
           world.addBody(sphereBody);
-          player=sphere;
+          player=sphereBody;
 
-          groundShape = new CANNON.Box(new CANNON.Vec3(600,5,150));
-          groundMaterial = new CANNON.Material();
-          Ccube = new CANNON.Body({
-            mass:0,
-            material:groundMaterial
-          });
+          // ******************LEVEL ONE**********************
+          // ground1Shape = new CANNON.Box(new CANNON.Vec3(600,5,150));
+          // ground1Material = new CANNON.Material();
+          // Ccube1 = new CANNON.Body({
+          //   mass:0,
+          //   material:ground1Material
+          // });
+          // Ccube1.addShape(ground1Shape);
+          // Ccube1.position.x+=450;
+          // world.add(Ccube1);
+          //
+          // groundShape2 = new CANNON.Box(new CANNON.Vec3(200,5,75));
+          // ground2Material = new CANNON.Material();
+          // Ccube2 = new CANNON.Body({
+          //   mass:0,
+          //   material:ground2Material
+          // });
+          // Ccube2.addShape(groundShape2);
+          // Ccube2.position.x+=1250;
+          // Ccube2.position.z+=75;
+          // world.add(Ccube2);
+          //
+          // groundShape3 = new CANNON.Box(new CANNON.Vec3(200,5,75));
+          // ground3Material = new CANNON.Material();
+          // Ccube3 = new CANNON.Body({
+          //   mass:0,
+          //   material:ground2Material
+          // });
+          // Ccube3.addShape(groundShape2);
+          // Ccube3.position.x+=1550;
+          // Ccube3.position.z-=75;
+          // world.add(Ccube3);
+          //
+          // groundShape4 = new CANNON.Box(new CANNON.Vec3(200,5,75));
+          // ground4Material = new CANNON.Material();
+          // Ccube4 = new CANNON.Body({
+          //   mass:0,
+          //   material:ground4Material
+          // });
+          // Ccube4.addShape(groundShape4);
+          // Ccube4.position.x+=1850;
+          // Ccube4.position.z+=75;
+          // world.add(Ccube4);
+          //
+          // groundShape5 = new CANNON.Box(new CANNON.Vec3(300,5,150));
+          // ground5Material = new CANNON.Material();
+          // Ccube5 = new CANNON.Body({
+          //   mass:0,
+          //   material:ground5Material
+          // });
+          // Ccube5.addShape(groundShape5);
+          // Ccube5.position.x+=2350;
+          // world.add(Ccube5);
+          // ******************LEVEL ONE**********************
 
-          // groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0),-Math.PI/2);
-          Ccube.addShape(groundShape);
-          Ccube.position.x+=450;
-          world.add(Ccube);
+          // ******************LEVEL TWO**********************
 
-          groundShape1 = new CANNON.Box(new CANNON.Vec3(600,5,150));
+          ground1Shape = new CANNON.Box(new CANNON.Vec3(600,5,150));
           ground1Material = new CANNON.Material();
           Ccube1 = new CANNON.Body({
             mass:0,
             material:ground1Material
           });
-
-          // groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1,0,0),-Math.PI/2);
-          Ccube1.addShape(groundShape1);
+          Ccube1.addShape(ground1Shape);
           Ccube1.position.x+=450;
           world.add(Ccube1);
-          Ccube1.position.z+=750;
 
-          groundShape2 = new CANNON.Box(new CANNON.Vec3(150,5,225));
+          ground2Shape = new CANNON.Box(new CANNON.Vec3(100,5,50));
           ground2Material = new CANNON.Material();
           Ccube2 = new CANNON.Body({
             mass:0,
             material:ground2Material
           });
-          Ccube2.addShape(groundShape2);
-          Ccube2.position.x+=900;
-          Ccube2.position.z+=375;
+          Ccube2.addShape(ground2Shape);
+          Ccube2.position.x+=1225;
+          Ccube2.position.z+=75;
           world.add(Ccube2);
 
+          ground3Shape = new CANNON.Box(new CANNON.Vec3(100,5,50));
+          ground3Material = new CANNON.Material();
+          Ccube3 = new CANNON.Body({
+            mass:0,
+            material:ground3Material
+          });
+          Ccube3.addShape(ground3Shape);
+          Ccube3.position.x+=1425;
+          Ccube3.position.z-=75;
+          world.add(Ccube3);
 
+          ground4Shape = new CANNON.Box(new CANNON.Vec3(200,5,150));
+          ground4Material = new CANNON.Material();
+          Ccube4 = new CANNON.Body({
+            mass:0,
+            material:ground4Material
+          });
+          Ccube4.addShape(ground4Shape);
+          Ccube4.position.x+=1850;
+          world.add(Ccube4);
+
+          ground5Shape = new CANNON.Box(new CANNON.Vec3(100,2.5,150));
+          ground5Material = new CANNON.Material();
+          Ccube5 = new CANNON.Body({
+            mass:0,
+            material:ground5Material
+          });
+          Ccube5.addShape(ground5Shape);
+          Ccube5.position.x+=2100;
+          cube5.rotateZ(Math.PI/4);
+          Ccube5.position.y+=65;
+          world.add(Ccube5);
+
+          ground6Shape = new CANNON.Box(new CANNON.Vec3(100,10,150));
+          ground6Material = new CANNON.Material();
+          Ccube6 = new CANNON.Body({
+            mass:0,
+            material:ground6Material
+          });
+          Ccube6.addShape(ground6Shape);
+          Ccube6.position.x+=2275;
+          Ccube6.position.y+=120;
+          world.add(Ccube6);
+
+          ground7Shape = new CANNON.Box(new CANNON.Vec3(250,10,150));
+          ground7Material = new CANNON.Material();
+          Ccube7 = new CANNON.Body({
+            mass:0,
+            material:ground7Material
+          });
+          Ccube7.addShape(ground7Shape);
+          Ccube7.position.x+=2525;
+          Ccube7.position.y+=120;
+          world.add(Ccube7);
+
+          // ground8Shape = new CANNON.Box(new CANNON.Vec3(250,10,150));
+          // ground8Material = new CANNON.Material();
+          // Ccube8 = new CANNON.Body({
+          //   mass:0,
+          //   material:ground8Material
+          // });
+          // Ccube8.addShape(ground8Shape);
+          // Ccube8.position.x+=3100;
+          // Ccube7.position.y+=120;
+          // Ccube7.position.y+=70;
+          // world.add(Ccube8);
+          // obst1Shape = new CANNON.Box(new CANNON.Vec3(25,40,25));
+          // Cobst1Material = new CANNON.Material();
+          // Cobst1 = new CANNON.Body({
+          //   mass:0,
+          //   material:Cobst1Material
+          // });
+          // Cobst1.addShape(obst1Shape);
+          // Cobst1.position.x+=400;
+          // Cobst1.position.y+=50;
+          // Cobst1.position.z+=120;
+          // world.add(Cobst1);
+          //
+          // obst2Shape = new CANNON.Box(new CANNON.Vec3(25,40,25));
+          // Cobst2Material = new CANNON.Material();
+          // Cobst2 = new CANNON.Body({
+          //   mass:0,
+          //   material:Cobst2Material
+          // });
+          // Cobst2.addShape(obst2Shape);
+          // Cobst2.position.x+=10;
+          // Cobst2.position.y+=50;
+          // Cobst2.position.z-=120;
+          // world.add(Cobst2);
+          // ******************LEVEL TWO**********************
       }
+
+
+function obstacles(){
+//   if(inward)
+//   {
+//     Cobst1.position.z-=0.5;
+//     Cobst2.position.z+=0.5;
+//
+//   }
+//   else {
+//     Cobst1.position.z+=0.5;
+//     Cobst2.position.z-=0.5;
+//   }
+//   if(Cobst2.position.z==110 && Cobst1.position.z==-110)
+//   {
+//     inward=false;
+//   }
+//   if(Cobst1.position.z==110 && Cobst2.position.z==-110)
+//   {
+//     inward=true;
+//   }
+// ******************LEVEL TWO**********************
+// if(shrinking)
+// {
+//   Ccube1.removeShape(ground1Shape);
+//   ground1Shape = new CANNON.Box(new CANNON.Vec3(shrinkBase-shrink,5,150));
+//   shrinkBase-25;
+// }
+
+// ******************LEVEL TWO**********************
+
+     }
 
   //draw scene
   function updatePhysics() {
 
           // Step the physics world
           world.step(timeStep);
-
           // Copy coordinates from Cannon.js to Three.js
-          sphereBody.position.x=sphere.position.x;
-          sphereBody.position.z=sphere.position.z;
-          sphere.position.y=sphereBody.position.y;
+          sphere.position.copy(sphereBody.position);
           sphereBody.quaternion.copy(sphere.quaternion);
-          cube.position.copy(Ccube.position);
-          cube.quaternion.copy(Ccube.quaternion);
+
+          // ******************LEVEL ONE**********************
+          // cube1.position.copy(Ccube1.position);
+          // cube1.quaternion.copy(Ccube1.quaternion);
+          //
+          // cube2.position.copy(Ccube2.position);
+          // cube2.quaternion.copy(Ccube2.quaternion);
+          //
+          // cube3.position.copy(Ccube3.position);
+          // cube3.quaternion.copy(Ccube3.quaternion);
+          //
+          // cube4.position.copy(Ccube4.position);
+          // cube4.quaternion.copy(Ccube4.quaternion);
+          //
+          // cube5.position.copy(Ccube5.position);
+          // cube5.quaternion.copy(Ccube5.quaternion);
+          // ******************LEVEL ONE**********************
+
+          // ******************LEVEL TWO**********************
           cube1.position.copy(Ccube1.position);
           cube1.quaternion.copy(Ccube1.quaternion);
+
           cube2.position.copy(Ccube2.position);
           cube2.quaternion.copy(Ccube2.quaternion);
 
+          cube3.position.copy(Ccube3.position);
+          cube3.quaternion.copy(Ccube3.quaternion);
+
+          cube4.position.copy(Ccube4.position);
+          cube4.quaternion.copy(Ccube4.quaternion);
+
+          cube5.position.copy(Ccube5.position);
+          Ccube5.quaternion.copy(cube5.quaternion);
+
+          cube6.position.copy(Ccube6.position);
+          cube6.quaternion.copy(Ccube6.quaternion);
+
+          cube7.position.copy(Ccube7.position);
+          cube7.quaternion.copy(Ccube7.quaternion);
+
+          // cube8.position.copy(Ccube8.position);
+          // cube8.quaternion.copy(Ccube8.quaternion);
+          // obst1.position.copy(Cobst1.position);
+          // obst1.quaternion.copy(Cobst1.quaternion);
+          //
+          // obst2.position.copy(Cobst2.position);
+          // obst2.quaternion.copy(Cobst2.quaternion);
+
+          // cube8.position.copy(Ccube8.position);
+          // cube8.quaternion.copy(Ccube8.quaternion);
+
+
+          // ******************LEVEL TWO**********************
       }
       window.addEventListener ("keydown",event=>{
   if(event.keyCode in array)
       array[event.keyCode] = true;
-  if(event.keyCode == 32 && sphereBody.position.y<=10)
-    sphereBody.velocity.y+=25;
+  //jump
+  // if(event.keyCode == 32 && sphereBody.position.y<=10)
+  //   sphereBody.velocity.y+=70;
 });
 
 window.addEventListener ("keyup",event=>{
@@ -268,7 +664,7 @@ var GameOver = function(x){
     }
 }
 var winner = function(){
-  if( player.position.x < 25 && player.position.x > -25 && (player.position.z < 775 && player.position.z > 725))
+   if( player.position.x < 2360 && player.position.x > 2350)
   {
     return true;
   }
@@ -290,28 +686,40 @@ var accelerate = function(x){
   }
 }
 // small letters dont stop
+var quat = new THREE.Quaternion();
 var playerMovement = function(){
+  var inputVelocity = new THREE.Vector3();
+  inputVelocity.set(0,0,0);
   //65 left 68 right 87 up 83 down
   if(array[87]){
         //Forward
-        accelerate(1);
+        // accelerate(1);
+        inputVelocity.x += acc;
     }
   if(array[83]){
         //Back
-        accelerate(2);
+        // accelerate(2);
+        inputVelocity.x -= acc;
     }
   if(array[65]){
         //left
-        player.rotateY(turnrate);
+        // player.rotateY(turnrate);
+        inputVelocity.z -= acc;
 
     }
   if(array[68]){
         //right
-        player.rotateY(-turnrate);
+        // player.rotateY(-turnrate);
+        inputVelocity.z += acc;
     }
-  player.translateX(speed);
-  controls.target.set(player.position.x,player.position.y,player.position.z);
-  controls.update();
+
+  quat.setFromEuler(new THREE.Euler(sphere.rotation.x,sphere.rotation.y,0));
+  // quat.multiplyVector3(inputVelocity);
+  inputVelocity.applyQuaternion(quat);
+  player.velocity.x += inputVelocity.x;
+  player.velocity.z += inputVelocity.z;
+  // controls.target.set(sphere.position.x,sphere.position.y,sphere.position.z);
+  // controls.update();
 }
 
 var decelerate = function(){
@@ -329,9 +737,13 @@ var decelerate = function(){
   {
     renderer.render(scene, camera);
   };
+
   var GameLoop = function()
   {
-    // sphereBody.position.x+=0.4;
+    requestAnimationFrame(GameLoop);
+
+
+
     if(sphereBody.position.y<0)
     {
       GameOver(1);
@@ -340,14 +752,23 @@ var decelerate = function(){
         {
           GameOver(2);
         }
-    requestAnimationFrame(GameLoop);
-    playerMovement();
-    decelerate();
-    updatePhysics();
+
+    //playerMovement();
+    obstacles();
+    // decelerate();
+    if(controls.enabled)
+      { updatePhysics(); }
+    controls.update( Date.now() - time );
+    time = Date.now();
     render();
 
   }
   initCannon();
+  ///////////
+  controls = new PointerLockControls( camera , sphereBody );
+  //camera.position.set();
+  scene.add( controls.getObject() );
+  ///////////
   GameLoop();
 </script>
   </body>
