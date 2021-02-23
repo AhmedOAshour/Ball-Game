@@ -52,12 +52,6 @@
   document.body.appendChild(renderer.domElement);
   var goal;
    var player;
-   const acc=0.1
-   const turnrate=0.01;
-   const maxSpeed=2;
-   const friction = 0.008;
-   var speed = 0;
-   var speedlr=0;
    //65 left 68 right 87 up 83 down
    var array = {65: false, 68: false, 87: false, 83: false};    //event listener for resizing app to window size
    window.addEventListener('resize', function()
@@ -169,11 +163,11 @@ loader.load(
    function initCannon() {
 
           world = new CANNON.World();
-          world.gravity.set(0,-25,0);
+          world.gravity.set(0,0,0);
 
           world.broadphase = new CANNON.NaiveBroadphase();
-          // world.solver.iterations = 10;
-
+           world.solver.iterations = 5;
+          // objects
           shape = new CANNON.Sphere(5);
           mass = 1;
           sphereBody = new CANNON.Body({
@@ -183,7 +177,7 @@ loader.load(
           sphereBody.position.y=10;
           sphereBody.linearDamping = 0.5;
           world.addBody(sphereBody);
-          player=sphere;
+          player=sphereBody;
 
           groundShape = new CANNON.Box(new CANNON.Vec3(600,5,150));
           groundMaterial = new CANNON.Material();
@@ -231,10 +225,10 @@ loader.load(
           world.step(timeStep);
 
           // Copy coordinates from Cannon.js to Three.js
-          sphereBody.position.x=sphere.position.x;
-          sphereBody.position.z=sphere.position.z;
+          sphere.position.x=sphereBody.position.x;
+          sphere.position.z=sphereBody.position.z;
           sphere.position.y=sphereBody.position.y;
-          sphereBody.quaternion.copy(sphere.quaternion);
+          sphere.quaternion.copy(sphereBody.quaternion);
           cube.position.copy(Ccube.position);
           cube.quaternion.copy(Ccube.quaternion);
           cube1.position.copy(Ccube1.position);
@@ -276,54 +270,59 @@ var winner = function(){
     return false;
   }
 }
-var accelerate = function(x){
-  if(speed>=maxSpeed || speed<=-maxSpeed){
-    return;
-  }
-  if(x==1)
-  {
-    speed+=acc;
-  }
-  else
-  {
-    speed-=acc;
-  }
-}
 // small letters dont stop
+var acceleration = yawSpeed = 0;
+var accelerationImpulse, bodyCenter;
+var accelerate = function(){
+  var accelerationImpulse = new CANNON.Vec3(acceleration,0,0);
+  var accelerationImpulse = player.quaternion.vmult( accelerationImpulse );
+  var bodyCenter = new CANNON.Vec3(player.position.x,
+    player.position.y,
+    player.position.z );
+  player.applyImpulse ( accelerationImpulse, bodyCenter );
+  }
 var playerMovement = function(){
   //65 left 68 right 87 up 83 down
   if(array[87]){
         //Forward
-        accelerate(1);
+        acceleration = 2;
+        accelerate();
     }
   if(array[83]){
         //Back
-        accelerate(2);
+        acceleration = -2;
+        accelerate();
     }
   if(array[65]){
         //left
-        player.rotateY(turnrate);
-
+        yawSpeed = 1;
     }
-  if(array[68]){
+  else if(array[68]){
         //right
-        player.rotateY(-turnrate);
+        yawSpeed = -1;
     }
-  player.translateX(speed);
+  else {
+      yawSpeed = 0;
+    }
+    var directionVector = new CANNON.Vec3(0, yawSpeed, 0);
+		var directionVector = player.quaternion.vmult( directionVector );
+		player.angularVelocity.set( directionVector.x, directionVector.y, directionVector.z );
+
+  //player.translateX(speed);
   controls.target.set(player.position.x,player.position.y,player.position.z);
   controls.update();
 }
 
-var decelerate = function(){
-  if(speed>0)
-    {
-      speed-=friction;
-    }
-    else if(speed<0)
-    {
-      speed+=friction;
-    }
-}
+// var decelerate = function(){
+//   if(speed>0)
+//     {
+//       speed-=friction;
+//     }
+//     else if(speed<0)
+//     {
+//       speed+=friction;
+//     }
+// }
 
   var render = function()
   {
@@ -342,7 +341,7 @@ var decelerate = function(){
         }
     requestAnimationFrame(GameLoop);
     playerMovement();
-    decelerate();
+    //decelerate();
     updatePhysics();
     render();
 
