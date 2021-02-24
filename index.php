@@ -54,10 +54,8 @@ else{
 <script src="lib/OrbitControls.js"></script>
 <script src="lib/GLTFLoader.js"></script>
 <script src="lib/cannon.js"></script>
-<script src="lib/PointerLockControls.js"></script>
 
 <script>
-  console.log(level);
 (function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='//mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
   var timeStep=1/60;
   var scene = new THREE.Scene();
@@ -70,9 +68,6 @@ else{
   var inward=true;
   var player;
   const acc=3;
-  var shrink=25;
-  var shrinkBase=600;
-  var shrinking=true;
   const turnrate=0.09;
   const maxSpeed=2;
   const friction = 0.008;
@@ -344,10 +339,6 @@ loader.load(
           Ccube5.position.x+=2350;
           world.add(Ccube5);
     }
-
-
-
-
     function level2Init(){
      ground1Shape = new CANNON.Box(new CANNON.Vec3(600,5,150));
           ground1Material = new CANNON.Material();
@@ -396,7 +387,7 @@ loader.load(
           obst1Shape = new CANNON.Box(new CANNON.Vec3(2,6,25));
           Cobst1Material = new CANNON.Material();
           Cobst1 = new CANNON.Body({
-            mass:0,
+            mass:100,
             material:Cobst1Material
           });
           Cobst1.addShape(obst1Shape);
@@ -407,7 +398,7 @@ loader.load(
           obst2Shape = new CANNON.Box(new CANNON.Vec3(2,6,25));
           Cobst2Material = new CANNON.Material();
           Cobst2 = new CANNON.Body({
-            mass:0,
+            mass:100,
             material:Cobst2Material
           });
           Cobst2.addShape(obst2Shape);
@@ -429,7 +420,7 @@ loader.load(
           obst4Shape = new CANNON.Box(new CANNON.Vec3(2,6,65));
           Cobst4Material = new CANNON.Material();
           Cobst4 = new CANNON.Body({
-            mass:0,
+            mass:100,
             material:Cobst4Material
           });
           Cobst4.addShape(obst4Shape);
@@ -451,7 +442,7 @@ loader.load(
           obst6Shape = new CANNON.Box(new CANNON.Vec3(2,6,65));
           Cobst6Material = new CANNON.Material();
           Cobst6 = new CANNON.Body({
-            mass:0,
+            mass:100,
             material:Cobst6Material
           });
           Cobst6.addShape(obst6Shape);
@@ -459,24 +450,7 @@ loader.load(
           Cobst6.position.y+=140;
           world.add(Cobst6);
 
-          if(rotating)
-          {
-            obst1.rotateY(1.6);
-          }
 
-          if(rotating)
-          {
-            obst2.rotateY(1.6);
-          }
-
-          if(rotating)
-          {
-            obst4.rotateY(1.6);
-          }
-          if(rotating)
-          {
-            obst6.rotateY(1.6);
-          }
     }
 
 
@@ -627,30 +601,26 @@ loader.load(
            obst6.position.copy(Cobst6.position);
            Cobst6.quaternion.copy(obst6.quaternion);
 
-             if(inward)
-     {
-          Cobst1.position.z-=2;
-           Cobst2.position.z+=2;
+           if(rotating)
+           {
 
-            Cobst4.position.z+=2;
-           Cobst6.position.z-=2;
+             obst1.rotateY(0.1);
+           }
 
-  }
-  else {
-    Cobst1.position.z+=2;
-    Cobst2.position.z-=2;
-    Cobst4.position.z-=2;
-    Cobst6.position.z+=2;
-  }
-  if(Cobst2.position.z==70 && Cobst1.position.z==-70)
-  {
-    inward=false;
-  }
-  if(Cobst1.position.z==70 && Cobst2.position.z==-70)
-  {
-    inward=true;
-  }
-    }
+           if(rotating)
+           {
+             obst2.rotateY(0.1);
+           }
+
+           if(rotating)
+           {
+             obst4.rotateY(0.1);
+           }
+           if(rotating)
+           {
+             obst6.rotateY(0.1);
+           }
+}
 
   function level3Update(){
     cube1.position.copy(Ccube1.position);
@@ -889,8 +859,6 @@ var decelerate = function(){
 
   var GameLoop = function()
   {
-    console.log(sphereBody.position.y);
-    console.log(sphereBody.position.x);
     if(sphereBody.position.y<loseheight)
     {
       GameOver(1);
